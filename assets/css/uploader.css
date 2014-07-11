@@ -1,0 +1,75 @@
+@charset "utf-8";
+
+.cropper    {
+    float: left;
+}
+.uploader-aspect    {
+    float: left;
+    margin-left: 1em;
+}
+.uploader-control   {
+    clear: left;
+}
+
+/* From jquery.cropper.css */
+/**
+ * MIT licence
+ * Version 1.0
+ * Sjaak Priester, Amsterdam 13-06-2014.
+ */
+.sjaakp-preview {
+    box-sizing: content-box;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #c8c8c8;
+    border-radius: 12px;
+    background: url('data:image/gif;base64,R0lGODlhEAAQAKEAAISChPz+/P///wAAACH5BAEAAAIALAAAAAAQABAAAAIfhG+hq4jM3IFLJhoswNly/XkcBpIiVaInlLJr9FZWAQA7');
+    margin-bottom: 1em;
+}
+
+.sjaakp-preview.sjaakp-state-loaded {
+    border-color: #3c763d;
+}
+
+.sjaakp-preview.sjaakp-state-nocrop {
+    background: #e4e4e4;
+}
+
+.sjaakp-img {
+    position: absolute;
+    left: 0;
+    top: 0;
+    cursor: not-allowed;
+}
+
+.sjaakp-state-nocrop .sjaakp-img    {
+    max-width: 90%;
+    max-height: 90%;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+}
+
+.sjaakp-overlay {
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    background-color: transparent;
+    border: solid rgba(255, 255, 255, .75);
+    cursor: move;
+}
+
+.sjaakp-slider    {
+    margin-bottom: 1em;
+}
+
+.sjaakp-spos-left .sjaakp-preview,
+.sjaakp-spos-left .sjaakp-slider,
+.sjaakp-spos-right .sjaakp-preview,
+.sjaakp-spos-right .sjaakp-slider   {
+    display: inline-block;
+    margin-right: 1em;
+}
