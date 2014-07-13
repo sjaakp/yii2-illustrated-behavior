@@ -207,3 +207,17 @@ See: [https://github.com/sjaakp/stylefile](https://github.com/sjaakp/stylefile).
 Extra client options for the cropper control.
 See: [https://github.com/sjaakp/cropper](https://github.com/sjaakp/cropper).
 
+## FAQ ##
+
+#### I'm getting an error like 'Trying to get property of non-object' ####
+
+You probably didn't give the form the option `'enctype' => 'multipart/form-data'`.
+
+#### The image is distorted after upload. ####
+
+Maybe the owner model is used under a scenario. This scenario should declare the crop attributes
+(`'<file>_x'`, `'<file>_y'`, `'<file>_w'`, `'<file>_h'`) in the attribute list.
+
+#### I'm getting an error message: one of the crop dimensions appears to be 0. aspectRatio is a string. ####
+
+The owner model may be used under a scenario. This scenario should declare the aspect ratio attribute (`'aspect'`) in the attribute list.
