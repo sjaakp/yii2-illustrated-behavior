@@ -66,7 +66,7 @@
                     class: settings.btnClass,
                     href: "#"
                 })
-                    .text(settings.btnText)
+                    .html(settings.btnText)
                     .click(function(e) {
                         finp.click();
                         e.preventDefault();
