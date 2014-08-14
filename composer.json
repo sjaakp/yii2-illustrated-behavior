@@ -12,7 +12,9 @@
         }
     ],
     "require": {
-        "yiisoft/yii2": "*"
+        "yiisoft/yii2": "*",
+        "yiisoft/yii2-jui": "*",
+        "yiisoft/yii2-imagine": "*"
     },
     "autoload": {
         "psr-4": {
