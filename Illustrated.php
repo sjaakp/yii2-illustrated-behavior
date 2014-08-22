@@ -157,6 +157,9 @@ class Illustrated extends Behavior  {
         ];
     }
 
+    /**
+     * @param $owner ActiveRecord
+     */
     public function attach($owner)    {
         parent::attach($owner);
 
@@ -182,8 +185,11 @@ class Illustrated extends Behavior  {
     public function beforeValidate($event)  {
         $upl = new UploadedFile();
         $this->_file = $upl->getInstance($this->owner, $this->fileAttribute);
-        if (! $this->_file->hasError)   {
+        if ($this->_file && ! $this->_file->hasError)   {
 
+            /**
+             * @var $owner ActiveRecord
+             */
             $owner = $this->owner;
 
             // Determine aspect ratio
@@ -226,6 +232,9 @@ class Illustrated extends Behavior  {
         if (! $this->_file->hasError)  {
             $this->deleteFiles();       // in case we are updating, delete old image files
 
+            /**
+             * @var $owner ActiveRecord
+             */
             $owner = $this->owner;
 
             $ext = $this->_file->extension;
@@ -251,6 +260,9 @@ class Illustrated extends Behavior  {
 
     public function afterSave($event)  {
         if (! $this->_file->hasError)  {
+            /**
+             * @var $owner ActiveRecord
+             */
             $owner = $this->owner;
 
             $fileName = $owner->getAttribute($this->imgAttribute);
@@ -304,6 +316,9 @@ class Illustrated extends Behavior  {
      * @return string
      */
     public function getImgHtml($size = 0, $forceSize = true, $options = [])  {
+        /**
+         * @var $owner ActiveRecord
+         */
         $owner = $this->owner;
         if ($owner->isNewRecord) return '';
 
@@ -363,6 +378,9 @@ class Illustrated extends Behavior  {
     }
 
     protected function randomName() {
+        /**
+         * @var $owner ActiveRecord
+         */
         $owner = $this->owner;
 
         // Create random file name. Override this if you need another name generation.
