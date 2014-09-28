@@ -12,9 +12,7 @@ use yii\web\AssetBundle;
 
 class UploaderAsset extends AssetBundle {
     public $depends = [
-        'yii\web\JqueryAsset',
-        'yii\jui\SliderAsset',
-        'yii\jui\ThemeAsset'
+        'yii\jui\JuiAsset',
     ];
 
     public function init()    {
