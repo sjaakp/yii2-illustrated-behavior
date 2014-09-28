@@ -174,7 +174,7 @@ class Illustrated extends Behavior  {
         $vals = $owner->getValidators();
         $vals[] = new FileValidator(array_merge($this->fileValidation, [
             'attributes' => [ $this->fileAttribute ],
-            'types'=>'jpg, jpeg, gif, png',
+            'extensions'=>'jpg, jpeg, gif, png',
             'skipOnEmpty' => true
         ]));
         $vals[] = new SafeValidator([
