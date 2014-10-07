@@ -229,7 +229,7 @@ class Illustrated extends Behavior  {
     }
 
     public function beforeSave($event)  {
-        if (! $this->_file->hasError)  {
+        if ($this->_file && ! $this->_file->hasError)  {
             $this->deleteFiles();       // in case we are updating, delete old image files
 
             /**
@@ -259,7 +259,7 @@ class Illustrated extends Behavior  {
     }
 
     public function afterSave($event)  {
-        if (! $this->_file->hasError)  {
+        if ($this->_file && ! $this->_file->hasError)  {
             /**
              * @var $owner ActiveRecord
              */
