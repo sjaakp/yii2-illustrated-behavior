@@ -63,7 +63,7 @@ You can manually install **Illustrated** by [downloading the source in ZIP-forma
     
 Note that the ActiveForm must have the option `'enctype'` set to `'multipart/form-data'`.
 
-## Illustrated function ##
+## Illustrated functions ##
 
 #### getImgHtml() ####
 
@@ -77,6 +77,11 @@ Gets a complete HTML `img` element of the uploaded and cropped illustration.
 
 - `options`: HTML options of the `img` tag. See [yii\helpers\Html::img](http://www.yiiframework.com/doc-2.0/yii-helpers-basehtml.html#img%28%29-detail). Default: `[]` (empty array).
 
+#### deleteFiles() ####
+
+**function deleteFiles()**
+
+Deletes the image file(s) and clears `imgAttribute`.
 
 ## Illustrated options ##
 
@@ -86,7 +91,7 @@ Name of the file input attribute in the ActiveRecord. This is the attribute to b
 
 #### imgAttribute ####
 
-Name of the attribute in the ActiveRecord where the img src file name of the resulting cropped image is stored. Default: `'img'`.
+Name of the attribute in the ActiveRecord where the img src file name of the resulting cropped image is stored. This attribute should be a field in the database table of the ActiveRecord. Default: `'img'`.
 
 #### sizeAttribute ####
 

@@ -369,7 +369,10 @@ class Illustrated extends Behavior  {
         return Yii::getAlias($r);
     }
 
-    protected function deleteFiles()    {
+    /**
+     * Delete image files and clear imgAttribute
+     */
+    public function deleteFiles()    {
         /**
          * @var $owner ActiveRecord
          */
@@ -391,6 +394,7 @@ class Illustrated extends Behavior  {
                 $path = $this->getImgBaseDir() . DIRECTORY_SEPARATOR . $fileName;
                 if (file_exists($path)) unlink($path);
             }
+            $owner->setAttribute($this->imgAttribute, null);
         }
     }
 
