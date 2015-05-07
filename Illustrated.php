@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Sjaak
- * Date: 2-6-14
- * Time: 12:16
- */
 
 /**
  * FAQ
@@ -38,7 +32,7 @@ class Illustrated extends Behavior  {
 
     /**
      * @var string
-     * Name of the file input attribute in the model.
+     * Name of the file input attribute in the model. This is the attribute to be used with Uploader.
      */
     public $fileAttribute = 'file';
 
@@ -82,11 +76,19 @@ class Illustrated extends Behavior  {
 
     /**
      * @var null|string
-     * Directory where cropped images are saved.
+     * Directory or alias where cropped images are saved.
      * If null (default), the directory will be '@webroot/<$illustrationDirectory>/<table name>', where table name is
      *  the table name of the model.
      */
     public $directory;
+
+    /**
+     * @var null|string
+     * Base URL or alias where cropped images reside.
+     * If null (default), the URL will be '@web/<$illustrationDirectory>/<table name>', where table name is
+     *  the table name of the model.
+     */
+    public $baseUrl;
 
     /**
      * @var string
@@ -322,24 +324,24 @@ class Illustrated extends Behavior  {
         $owner = $this->owner;
         if ($owner->isNewRecord) return '';
 
-        $baseUrl = $this->directory ? '@web/' . $this->directory
+        $bUrl = $this->baseUrl ? $this->baseUrl
             : '@web/' . $this->illustrationDirectory . '/' . $owner->tableName();
-        $baseUrl .= '/';
+        $bUrl .= '/';
 
         $s = $this->sizeAttribute ? $owner->getAttribute($this->sizeAttribute) : $this->cropSize;
         if ($this->sizeSteps && $s > 0)    {
             if ($size == 0)
-                $url = $baseUrl . $s . '/';
+                $url = $bUrl . $s . '/';
             else    {
                 $imgSize = $this->cropSize >> ($this->sizeSteps - 1);
                 $step = 0;
                 while ($imgSize < $size && $step < $this->sizeSteps) $imgSize <<= 1;
 
-                $url = $baseUrl . $imgSize . '/';
+                $url = $bUrl . $imgSize . '/';
             }
         }
         else    {
-            $url = $baseUrl;
+            $url = $bUrl;
         }
         if ($forceSize && $size > 0) {
             $style = isset($options['style']) ? $options['style'] : '';
@@ -350,12 +352,20 @@ class Illustrated extends Behavior  {
     }
 
     protected function getImgBaseDir()  {
-        return $this->directory ? $this->directory
-            : Yii::getAlias('@webroot') . DIRECTORY_SEPARATOR . $this->illustrationDirectory
-                . DIRECTORY_SEPARATOR . $this->owner->tableName();
+        /**
+         * @var $owner ActiveRecord
+         */
+        $owner = $this->owner;
+        $r = $this->directory ? $this->directory
+            : '@webroot' . DIRECTORY_SEPARATOR . $this->illustrationDirectory
+            . DIRECTORY_SEPARATOR . $owner->tableName();
+        return Yii::getAlias($r);
     }
 
     protected function deleteFiles()    {
+        /**
+         * @var $owner ActiveRecord
+         */
         $owner = $this->owner;
 
         $fileName = $owner->getAttribute($this->imgAttribute);

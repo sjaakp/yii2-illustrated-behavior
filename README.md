@@ -82,7 +82,7 @@ Gets a complete HTML `img` element of the uploaded and cropped illustration.
 
 #### fileAttribute ####
 
-Name of the file input attribute in the ActiveRecord. Default: `'file'`.
+Name of the file input attribute in the ActiveRecord. This is the attribute to be used with the Uploader widget. Default: `'file'`.
 
 #### imgAttribute ####
 
@@ -121,8 +121,14 @@ Default: `0` (no crop variants).
 
 #### directory ####
 
-Directory where cropped images are saved.
+Directory (or alias) where cropped images are saved.
 If `null`, the directory will be `'@webroot/<$illustrationDirectory>/<table name>'`, where `<table name>` is the table name of the ActiveRecord.
+Default: `null`.
+
+#### baseUrl ####
+
+URL (or alias) where cropped images reside.
+If `null`, the URL will be `'@web/<$illustrationDirectory>/<table name>'`, where `<table name>` is the table name of the ActiveRecord.
 Default: `null`.
 
 #### illustrationDirectory ####
