@@ -135,11 +135,6 @@ Default: `null`.
 
 Name of subdirectory under `'@webroot'` where cropped images are stored. Default: `'illustrations'`. If `directory` is anything else than null, `illustrationDirectory` is ignored
 
-#### noImage ####
-
-HTML returned if no image is available, i.e. 
-`$imgAttribute` is empty. Default: `''` (empty text).
-
 #### tooSmallMsg ####
 
 Error message template for images that are too small to crop. Parameters: original file name, width, and height.
