@@ -98,6 +98,12 @@ class Illustrated extends Behavior  {
 
     /**
      * @var string
+     * HTML returned if $imgAttribute is empty.
+     */
+    public $noImage = '';
+
+    /**
+     * @var string
      * Error message for images that are too small to crop. Parameters: original file name, width, and height.
      */
     public $tooSmallMsg = 'Image "%s" is too small (%d×%d).';
@@ -322,7 +328,8 @@ class Illustrated extends Behavior  {
          * @var $owner ActiveRecord
          */
         $owner = $this->owner;
-        if ($owner->isNewRecord) return '';
+        $fName = $owner->getAttribute($this->imgAttribute);
+        if (empty($fName)) return $this->noImage;
 
         $bUrl = $this->baseUrl ? $this->baseUrl
             : '@web/' . $this->illustrationDirectory . '/' . $owner->tableName();
@@ -348,7 +355,7 @@ class Illustrated extends Behavior  {
             $style .= "max-width:{$size}px;max-height:{$size}px;";
             $options['style'] = $style;
         }
-        return Html::img($url . $owner->getAttribute($this->imgAttribute), $options);
+        return Html::img($url . $fName, $options);
     }
 
     protected function getImgBaseDir()  {
