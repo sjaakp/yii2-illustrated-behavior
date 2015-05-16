@@ -322,8 +322,13 @@ class Illustrated extends Behavior  {
      * @param array $options
      *      HTML-options of the img-tag; see yii\helpers\Html::img().
      * @return string
+     * Override this function to specialize it.
      */
     public function getImgHtml($size = 0, $forceSize = true, $options = [])  {
+        return $this->getImgHtmlInternal($size, $forceSize, $options);
+    }
+
+    public function getImgHtmlInternal($size, $forceSize, $options)  {
         /**
          * @var $owner ActiveRecord
          */
