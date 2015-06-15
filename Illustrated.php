@@ -369,8 +369,8 @@ class Illustrated extends Behavior  {
          */
         $owner = $this->owner;
         $r = $this->directory ? $this->directory
-            : '@webroot' . DIRECTORY_SEPARATOR . $this->illustrationDirectory
-            . DIRECTORY_SEPARATOR . $owner->tableName();
+            : '@webroot/' . $this->illustrationDirectory
+            . '/' . $owner->tableName();
         return Yii::getAlias($r);
     }
 
