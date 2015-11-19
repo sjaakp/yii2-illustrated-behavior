@@ -2,8 +2,11 @@
 /*jslint nomen: true, unparam: true, white: true */
 /**
  * MIT licence
- * Version 1.0
- * Sjaak Priester, Amsterdam 13-06-2014.
+ * Version 1.0.1
+ * Sjaak Priester, Amsterdam 13-06-2014 ... 12-11-2015.
+ *
+ * @link https://github.com/sjaakp/cropper
+ * @link http://www.sjaakpriester.nl/software/cropper
  */
 (function ($) {
     "use strict";
@@ -31,7 +34,7 @@
 
             // restore defaults
             this.scale = this.zoom =  1;
-            this.margin = Number(this.options.margin);  // explicit cast to number to avoid problems with + operator
+            this.margin = Number(this.options.margin);    // explicit cast to number to avoid problems with + operator
             this.crop = true;
             this.loaded = false;
 
@@ -97,7 +100,7 @@
                 dblclick: function(evt) {
                     this.slider.slider("option", "value", 1);
                     this._changeZoom(1);
-                }
+                }.bind(this)
             });
 
             var dragging = false;
@@ -121,23 +124,26 @@
                                     this._report();
                                     evt.preventDefault();
                                 }
-                            },
+                            }.bind(this),
                             mouseup: function (evt) {
                                 if (dragging)   {
                                     this._off(this.document, "mousemove mouseup");  // unbind events
                                     dragging = false;
                                     evt.preventDefault();
                                 }
-                            }
+                            }.bind(this)
                         });
 
                         evt.preventDefault();
                     }
-                }
+                }.bind(this)
             });
         },
 
         _setOption: function (key, value)    {
+            if (key === "sliderPosition")  {
+                this.element.removeClass("sjaakp-spos-" + this.options.sliderPosition);     // remove old class
+            }
             this._super(key, value);
             switch(key) {
                 case "aspectRatio":
@@ -224,14 +230,7 @@
                     scaleMax,
                     maxZoom;
 
-                if (scale >= 1)  {
-                    scale = 1;
-                    this.margin = Math.max(this.previewSize.width - this.nativeSize.width, this.previewSize.height - this.nativeSize.height) / 2;
-                    this._setMargin();
-                }
-
                 scaleMax = Math.max(cropWidth, cropHeight) / this.options.minSize;
-                this.scale = scale;
 
                 if (scaleMax < scale)  {
                     this.overlay.hide();
@@ -249,6 +248,12 @@
                         step: maxZoom / 100
                     });
                 }
+
+                if (scale >= 1)  {
+                    scale = 1;
+                }
+
+                this.scale = scale;
                 this._setImgSize();
             }
             else { this.scale = 1; }
@@ -269,8 +274,7 @@
         _positionSlider: function() {
             var pos = this.options.sliderPosition;
             this.slider.slider("option", "orientation", pos === "top" || pos === "bottom" ? "horizontal" : "vertical");
-            this.element.removeClass("sjaakp-spos-top sjaakp-spos-bottom sjaakp-spos-left sjaakp-spos-right")
-                .addClass("sjaakp-spos-" + this.options.sliderPosition);
+            this.element.addClass("sjaakp-spos-" + this.options.sliderPosition);
             if (pos === "top" || pos === "left")    {
                 this.element.prepend(this.slider);
             }
@@ -336,20 +340,18 @@
 
         _report: function () {
             if (this.loaded && this.crop)  {
-                var pos = {     // clone imgPos
-                        left: this.imgPos.left,
-                        top: this.imgPos.top
-                    },
+                var posLeft = this.imgPos.left,
+                    posTop = this.imgPos.top,
                     m = this.margin,
                     f = 1 / (this.scale * this.zoom);
 
-                pos.left = m + (this.imgSize.width - this.previewSize.width) / 2 - pos.left;
-                pos.top = m + (this.imgSize.height - this.previewSize.height) / 2 - pos.top;
+                posLeft = m + (this.imgSize.width - this.previewSize.width) / 2 - posLeft;
+                posTop = m + (this.imgSize.height - this.previewSize.height) / 2 - posTop;
 
                 this._trigger("change", null, {     // trigger change event
                     aspect: this.options.aspectRatio,
-                    x: f * pos.left,          // coordinates in native pixels
-                    y: f * pos.top,
+                    x: f * posLeft,          // coordinates in native pixels
+                    y: f * posTop,
                     w: f * (this.previewSize.width - 2 * m),
                     h: f * (this.previewSize.height - 2 * m)
                 });

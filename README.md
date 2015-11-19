@@ -5,45 +5,73 @@ Illustrated
 
 ### With associated upload-widget ###
 
-**Illustrated** is a Behavior for the [Yii2 framework](http://www.yiiframework.com/) that makes any ActiveRecord, well, *illustrated*. It links the ActiveRecord to one (or possibly more) image files. The images have strict proportions, allowing for a clean layout of views and other pages. The uploaded images may have several resolutions.
+**Illustrated** is a Behavior for the [Yii2 framework](http://www.yiiframework.com/) that makes any [ActiveRecord](http://www.yiiframework.com/doc-2.0/yii-db-activerecord.html "Yii API"), well, *illustrated*. It links the ActiveRecord to one or more image files. The images have strict proportions, allowing for a clean layout of views and other pages. The uploaded images may have several resolutions.
 
 The **Illustrated** behavior co-operates with the enclosed **Uploader** widget. This lets the user crop the image, before uploading it to the server.
 
 [Here](http://sjaakpriester.nl/software/illustrated) are some demo's of the **Illustrated** behavior and its associated **Uploader** widget. 
 
+**Note that the current version (1.1.0) is changed considerably from the previous versions.** It should be far easier to use. Please consult this document carefully.
+
+----------
+
 ## Installation ##
 
-The preferred way to install **Illustrated** is through [Composer](https://getcomposer.org/). Either add the following to the require section of your `composer.json` file:
+Install **Illustrated** with [Composer](https://getcomposer.org/). Either add the following to the require section of your `composer.json` file:
 
 	"sjaakp/yii2-illustrated-behavior": "*"
 
 Or run:
 
-	$ php composer.phar require sjaakp/yii2-illustrated-behavior "*"
+	composer require sjaakp/yii2-illustrated-behavior "*"
 
 You can manually install **Illustrated** by [downloading the source in ZIP-format](https://github.com/sjaakp/yii2-illustrated-behavior/archive/master.zip).
 
+----------
+
 ## Usage of Illustrated ##
 
-**Illustrated** is used like any Behavior of an ActiveRecord. The code should look something like this:
+**Illustrated** is used like any [Behavior](http://www.yiiframework.com/doc-2.0/yii-base-behavior.html "Yii API") of an ActiveRecord. The code should look something like this:
 
-    class <model> extends \yii\db\ActiveRecord { 
+	<?php
+
+	use sjaakp\illustrated\Illustrated;
+    
+	class <model> extends \yii\db\ActiveRecord { 
     	... 
     	public function behaviors(){
     		return [
     			[
-    				"class" => "sjaakp\illustrated\Illustrated",
-    				... 	// Illustrated options
+    				"class" => Illustrated::className(),
+					"attributes" => [
+						"picture" => [	// attribute name of the illustration
+							...		// options for 'picture'
+						],
+						...		// other illustrations
+					],
+    				... 	// other Illustrated options
     			],
      			...		// other behaviors
     		];
     	}
     	...
     }  
-    
+
+An ActiveRecord with **Illustrated** behavior can have one or more illustrations.
+
+Each illustration has it's own, fixed proportions, so that views of the ActiveRecord will have a consistent layout.
+
+Each illustration is associated with one attribute in the ActiveRecord and a corresponding field in the database table. This attribute stores the filename of the uploaded image. **Illustrated** uses its own naming scheme. An uploaded image file name is never longer than ten characters.
+
+In its basic operation, **Illustrated** stores one version of the uploaded file for each illustration. However, it is possible to make it store several versions, with different resolutions.
+
+The proportions of an illustration are defined by two options: `cropSize` and `aspectRatio`. As an option, `aspectRatio` can be selected from a list of options. In that case, `aspectOptions` is saved in an extra ActiveRecord attribute.
+
+----------
+
 ## Usage of Uploader ##
 
-**Uploader** is an input widget. It can be used in an ActiveForm like this:
+**Uploader** is an [input widget](http://www.yiiframework.com/doc-2.0/yii-widgets-inputwidget.html "Yii API"). It is intended to upload an illustration. It can be used in an [ActiveForm](http://www.yiiframework.com/doc-2.0/yii-widgets-activeform.html "Yii API") like this:
 
     use sjaakp\illustrated\Uploader;
      
@@ -53,7 +81,7 @@ You can manually install **Illustrated** by [downloading the source in ZIP-forma
     
     	...		// other form fields
     
-    	<?= $form->field($model, 'file')->widget(Uploader::className(), [
+    	<?= $form->field($model, 'picture')->widget(Uploader::className(), [
     		   ...		// Uploader options
 	    	]) ?>
     
@@ -61,129 +89,109 @@ You can manually install **Illustrated** by [downloading the source in ZIP-forma
     
     <?php ActiveForm::end(); ?>
     
-Note that the ActiveForm must have the option `'enctype'` set to `'multipart/form-data'`.
+**Uploader** displays a control for file upload, a control to crop the image, a checkbox to delete an uploaded image, and optionally a list of aspect ratios to choose from.
+
+**Note** that the ActiveForm must have the option `'enctype'` set to `'multipart/form-data'`.
+
+----------
 
 ## Illustrated functions ##
 
+These functions become methods of the ActiveRecord that owns the **Illustrated** Behavior.
+
 #### getImgHtml() ####
 
-**function getImgHtml( $size = 0, $forceSize = true, $options = [] )**
+**function getImgHtml( $attribute, $size = 0, $forceSize = true, $options = [] )**
 
 Gets a complete HTML `img` element of the uploaded and cropped illustration.
 
+- `attribute`: the attribute name of the illustration.
 - `size`: the length of largest side in pixels. If the option `sizeSteps` > 0, `getImgHtml()` returns the smallest crop variant possible. If `size` = 0 (default) the biggest crop variant is returned.
-
 - `forceSize`: if `true` (default), the element CSS is set to `size`.
-
 - `options`: HTML options of the `img` tag. See [yii\helpers\Html::img](http://www.yiiframework.com/doc-2.0/yii-helpers-basehtml.html#img%28%29-detail). Default: `[]` (empty array).
+
+The easiest way to display the illustration stored in the attribute `'picture'` in a view is:
+
+	...	
+	<?= $model->getImgHtml('picture') ?>
+	...
 
 #### deleteFiles() ####
 
-**function deleteFiles()**
+**function deleteFiles( $attribute )**
 
-Deletes the image file(s) and clears `imgAttribute`.
+Deletes the image file(s) and clears `attribute`.
+
+- `attribute`: the attribute name of the illustration.
+
+----------
+
 
 ## Illustrated options ##
 
-#### fileAttribute ####
+#### attributes ####
 
-Name of the file input attribute in the ActiveRecord. This is the attribute to be used with the Uploader widget. Default: `'file'`.
+`array` List of illustration properties `key => value`.
 
-#### imgAttribute ####
+Array member `key` is the name of the attribute that stores the file name of the resulting cropped image.
 
-Name of the attribute in the ActiveRecord where the img src file name of the resulting cropped image is stored. This attribute should be a field in the database table of the ActiveRecord. Default: `'img'`.
+`Value` is an array with the following properties (all are optional):
 
-#### sizeAttribute ####
+- **cropSize**:  `int` - Size of the largest side of the cropped image, in pixels. For portrait format (aspect ratio < 1.0) it is the height, for landscape format the width. 
+	- If not set, the default is taken. Default: `240`.
+- **aspectRatio**: `float|string` 
+	- If `float`: the fixed aspect ratio of the image; it is not saved in the database. 
+	- If `string`: name of aspect attribute in the model. The aspect ratio is saved in this database field. 
+	- If not set, the default is taken Default: `1.0`.
+- **sizeSteps**: `int` - Number of size variants of the cropped image. Each variant has half the size of the previous one. 
+	- Example: if `cropSize = 1280`, and `sizeSteps = 5`, variants will be saved with sizes 1280, 640, 320, 160, and 80 pixels, each in it's own subdirectory. 
+	- If `sizeSteps = 0` (default) or is not set, only one cropped image is saved, with size `cropSize`.
+- **allowTooSmall**: `bool` - If `true`, images which are too small to crop are accepted. They will be sized to fit in the target size, defined by `cropSize` and `aspectRatio`.
+- **tooSmallMsg**: `string` - Error message template for images that are too small to crop. Parameters: original file name, width, and height. Default: `'Image "%s" is too small (%d×%d).'`.
 
-If `null`: `cropSize` is strict, and the crop size is not stored in the ActiveRecord. 
-
-If `string`: name of the attribute in the ActiveRecord where size is stored. Lower crop size than `cropSize` may be accepted. 
-
-Default: `null`.
-
-#### aspectRatio ####
-
-If `float`: the fixed aspect ratio of the image; it is not saved in the database. 
-
-If `string`: name of aspect attribute in the ActiveRecord. The variable aspect ratio is saved in the database.
-
-Default: `1.0` (square).
-
-#### cropSize ####
-
-Size of the largest side of the cropped image, in pixels.
-For portrait format (aspect ratio < 1.0) it is the height, for landscape format the width.
-Default: `240`.
-
-#### sizeSteps ####
-
-Number of size variants of the cropped image. Each variant has half the size of the previous one.
-Example: if `cropSize` is 1280, and `sizeSteps` is 5, variants will be saved with sizes 1280, 640, 320, 160, and 80 pixels, each in it's own subdirectory.
-
-If `sizeSteps` is `0`, only one cropped image is saved, with size `cropSize`.
-
-Default: `0` (no crop variants).
+`Value` can also be a string. Then it is the name of the attribute. The properties all revert to default.
 
 #### directory ####
 
 Directory (or alias) where cropped images are saved.
-If `null`, the directory will be `'@webroot/<$illustrationDirectory>/<table name>'`, where `<table name>` is the table name of the ActiveRecord.
-Default: `null`.
+	
+If `null` (default), the directory will be `'@webroot/<$illustrationDirectory>/<table name>'`, where `<table name>` is the table name of the ActiveRecord.
 
 #### baseUrl ####
 
 URL (or alias) where cropped images reside.
-If `null`, the URL will be `'@web/<$illustrationDirectory>/<table name>'`, where `<table name>` is the table name of the ActiveRecord.
-Default: `null`.
+
+If `null` (default), the URL will be `'@web/<$illustrationDirectory>/<table name>'`, where `<table name>` is the table name of the ActiveRecord.
 
 #### illustrationDirectory ####
 
-Name of subdirectory under `'@webroot'` where cropped images are stored. Default: `'illustrations'`. If `directory` is anything else than null, `illustrationDirectory` is ignored
+Name of subdirectory under `'@webroot'` where cropped images are stored. Default: `'illustrations'`. If `directory` is anything else than `null`, `illustrationDirectory` is ignored
 
 #### noImage ####
 
 HTML returned if no image is available, i.e. 
 `$imgAttribute` is empty. Default: `''` (empty text).
 
-#### tooSmallMsg ####
-
-Error message template for images that are too small to crop. Parameters: original file name, width, and height.
-
-Default: `'Image "%s" is too small (%d×%d).'`.
-
 #### fileValidation ####
 
 Array with extra parameters for the validation of the file attribute. By default, only the file types and the number of files are tested.
 
-You may add things like maximum file size here. See [yii\validators\FileValidator](http://www.yiiframework.com/doc-2.0/yii-validators-filevalidator.html).
+You may add things like maximum file size here. See [FileValidator](http://www.yiiframework.com/doc-2.0/yii-validators-filevalidator.html "Yii API").
 Default: `[]` (empty array).
+
+----------
 
 ## Uploader options ##
 
-#### aspectRatio ####
-
-If `float`: the fixed aspect ratio of the image; it is not saved in the database.
-Example: `aspectRatio` is `.75` for portrait format (3x4).
-
-If `string`: name of aspect attribute in the model. The variable aspect ratio is stored in the database.
-
-Default: `1.0` (square).
-
-#### cropSize ####
-
-Size of the (largest) cropped image in pixels. Default: `240`.
-
 #### aspectOptions ####
 
-If `false`: aspect ratio is fixed.
+- If `false` (default): aspect ratio is fixed, and given by `aspectRatio` in the `attributes` option of **Illustrated**.
 
-If `array`: list of available aspect ratios. Keys are aspect ratios multiplied by 1000, values are descriptions of aspect ratios. One of the array keys should correspond to `aspectRatio` (i.e.: be 1000 × `aspectRatio`).
+- If `array`: list of available aspect ratios. Keys are aspect ratios multiplied by 1000, values are descriptions of aspect ratios.
 
-Default: `false`.
+Example of `aspectOptions` value:
 
-Example of `array` value:
-
-     $this->aspectOptions = [     // 1000 times real aspect ratio
+     $uploader->aspectOptions = [     // 1000 times real aspect ratio
                429 => 'tower (9×21)',      // aspect ratio is 0.429
                563 => 'high (9×16)',
                750 => 'portrait (3×4)',
@@ -195,8 +203,8 @@ Example of `array` value:
 
 #### defaultAspect ####
 
-Default selection of the aspect options. Note that there should be a corresponding key in the
-`aspectOptions` array. F.i.: if `defaultAspect` is `0.75`, one of the keys in the array
+Default selection of the aspect options. **Note** that there should be a corresponding key in the
+`aspectOptions` array. Example: if `defaultAspect` is `0.75`, one of the keys in the array
 should be 1000 × .75 = `750`.
 
 If `aspectOptions` is `false`, `defaultAspect` is ignored.
@@ -205,9 +213,9 @@ Default: `1.0`.
 
 #### radio ####
 
-If `false`: the aspect ratio can be chosen from a drop down list.
+- If `false`: the aspect ratio can be chosen from a drop down list.
 
-If `true`: the aspect ratio can be chosen in a radio button list.
+- If `true`: the aspect ratio can be chosen in a radio button list.
 
 Only applies when `aspectOptions != false`.
 
@@ -223,17 +231,25 @@ See: [https://github.com/sjaakp/stylefile](https://github.com/sjaakp/stylefile).
 Extra client options for the cropper control.
 See: [https://github.com/sjaakp/cropper](https://github.com/sjaakp/cropper).
 
-## FAQ ##
+#### deleteOptions ####
 
-#### I'm getting an error like 'Trying to get property of non-object' ####
+Options for delete checkbox. See [activeCheckbox](http://www.yiiframework.com/doc-2.0/yii-helpers-basehtml.html#activeCheckbox()-detail "Yii API")
 
-You probably didn't give the form the option `'enctype' => 'multipart/form-data'`.
+- If false, no delete chekbox is rendered.
 
-#### The image is distorted after upload. ####
+Default: `[ 'label' => 'Delete image' ]`.
 
-Maybe the owner model is used under a scenario. This scenario should declare the crop attributes
-(`'<file>_x'`, `'<file>_y'`, `'<file>_w'`, `'<file>_h'`) in the attribute list.
+----------
 
-#### I'm getting an error message: one of the crop dimensions appears to be 0. aspectRatio is a string. ####
+**Note:** in many cases, if the illustration has a fixed aspect ratio, it won't be necessary to set any option for 
+**Uploader**, and it can be rendered simply with:
 
-The owner model may be used under a scenario. This scenario should declare the aspect ratio attribute (`'aspect'`) in the attribute list.
+    	<?= $form->field($model, 'picture')->widget(Uploader::className()) ?>
+
+
+
+### FAQ ###
+
+**I'm getting an error like 'Trying to get property of non-object'**
+
+- You probably didn't give the form the option `'enctype' => 'multipart/form-data'`.

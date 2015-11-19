@@ -10,6 +10,9 @@
 .uploader-control   {
     clear: left;
 }
+.uploader-select {
+    margin-bottom: 1em;
+}
 
 /* From jquery.cropper.css */
 /**

@@ -1,9 +1,13 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: Sjaak
- * Date: 25-5-14
- * Time: 15:24
+ * MIT licence
+ * Version 1.1.0
+ * Sjaak Priester, Amsterdam 07-07-2014 ... 12-11-2015.
+ *
+ * Add illustrations to ActiveRecord in Yii 2.0 framework
+ *
+ * @link https://github.com/sjaakp/yii2-illustrated-behavior
+ * @link http://www.sjaakpriester.nl/software/illustrated
  */
 
 namespace sjaakp\illustrated;
