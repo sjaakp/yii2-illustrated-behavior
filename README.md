@@ -116,6 +116,15 @@ The easiest way to display the illustration stored in the attribute `'picture'` 
 	<?= $model->getImgHtml('picture') ?>
 	...
 
+#### getImgSrc() ####
+
+**function getImgHtml( $attribute, $size = 0 )**
+
+Gets the source URL of the uploaded and cropped illustration. Returns `false` if not set.
+
+- `attribute`: the attribute name of the illustration.
+- `size`: the length of largest side in pixels. If the option `sizeSteps` > 0, `getImgHtml()` returns the smallest crop variant possible. If `size` = 0 (default) the biggest crop variant is returned.
+
 #### deleteFiles() ####
 
 **function deleteFiles( $attribute )**

@@ -247,6 +247,21 @@ class Illustrated extends Behavior  {
         return $cfg->getImgHtml($size, $forceSize, $options);
     }
 
+    /**
+     *
+     * @param $attribute string
+     * @param int $size
+     *      The largest side in pixels.
+     *      If $sizeSteps > 0, getImgHtml returns the smallest crop variant equal to or bigger than $size.
+     *      If $size == 0 (default) the biggest variant is returned.
+     * @return string The url of the image source, or false if not set.
+     */
+    public function getImgSrc($attribute, $size = 0)  {
+        /** @var Illustration $cfg */
+        $cfg = $this->attributes[$attribute];
+        return $cfg->getImgSrc($size);
+    }
+
     protected function getImgRootDir()  {
         $r = $this->directory ?: '@webroot/' . $this->illustrationDirectory . '/' . $this->baseName;
         return Yii::getAlias($r);
