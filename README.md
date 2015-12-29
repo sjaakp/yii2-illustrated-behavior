@@ -118,7 +118,7 @@ The easiest way to display the illustration stored in the attribute `'picture'` 
 
 #### getImgSrc() ####
 
-**function getImgHtml( $attribute, $size = 0 )**
+**function getImgSrc( $attribute, $size = 0 )**
 
 Gets the source URL of the uploaded and cropped illustration. Returns `false` if not set.
 
