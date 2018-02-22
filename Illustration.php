@@ -12,7 +12,7 @@
 
 namespace sjaakp\illustrated;
 
-use yii\base\Object;
+use yii\base\BaseObject;
 use yii\db\ActiveRecord;
 use yii\web\UploadedFile;
 use yii\imagine\Image;
@@ -23,7 +23,7 @@ use Imagine\Image\ImageInterface;
 use Imagine\Image\Box;
 use Imagine\Image\Point;
 
-class Illustration extends Object   {
+class Illustration extends BaseObject   {
 
     /**
      * @var Illustrated
