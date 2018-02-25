@@ -167,7 +167,7 @@ class Illustrated extends Behavior  {
                 $illustration = [];
             }
             if (is_array($illustration)) $illustration = Yii::createObject(array_merge([
-                'class' => Illustration::className(),
+                'class' => Illustration::class,
                 'owner' => $this,
                 'attribute' => $attr
             ], $illustration));

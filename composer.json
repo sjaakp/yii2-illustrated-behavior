@@ -12,7 +12,8 @@
         }
     ],
     "require": {
-        "yiisoft/yii2": "*",
+        "php": ">=5.5.0",
+        "yiisoft/yii2": "~2.0.14",
         "yiisoft/yii2-jui": "*",
         "yiisoft/yii2-imagine": "*"
     },

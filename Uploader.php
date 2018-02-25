@@ -18,7 +18,6 @@ use yii\helpers\Json;
 use yii\widgets\InputWidget;
 use yii\base\InvalidConfigException;
 use yii\db\ActiveRecord;
-use Yii;
 
 
 class Uploader extends InputWidget {
