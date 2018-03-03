@@ -42,7 +42,7 @@ You can manually install **Illustrated** by [downloading the source in ZIP-forma
     	public function behaviors(){
     		return [
     			[
-    				"class" => Illustrated::className(),
+    				"class" => Illustrated::class,
 					"attributes" => [
 						"picture" => [	// attribute name of the illustration
 							...		// options for 'picture'
@@ -81,7 +81,7 @@ The proportions of an illustration are defined by two options: `cropSize` and `a
     
     	...		// other form fields
     
-    	<?= $form->field($model, 'picture')->widget(Uploader::className(), [
+    	<?= $form->field($model, 'picture')->widget(Uploader::class, [
     		   ...		// Uploader options
 	    	]) ?>
     
@@ -253,7 +253,7 @@ Default: `[ 'label' => 'Delete image' ]`.
 **Note:** in many cases, if the illustration has a fixed aspect ratio, it won't be necessary to set any option for 
 **Uploader**, and it can be rendered simply with:
 
-    	<?= $form->field($model, 'picture')->widget(Uploader::className()) ?>
+    	<?= $form->field($model, 'picture')->widget(Uploader::class) ?>
 
 
 
