@@ -161,6 +161,7 @@ class Illustration extends BaseObject   {
     /**
      * @param $event
      * Set file name and size before model is saved
+     * @throws \yii\base\Exception
      */
     public function beforeSave($event)    {
 

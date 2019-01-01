@@ -154,6 +154,7 @@ class Illustrated extends Behavior  {
 
     /**
      * @param $owner ActiveRecord
+     * @throws \yii\base\InvalidConfigException
      */
     public function attach($owner)    {
         parent::attach($owner);

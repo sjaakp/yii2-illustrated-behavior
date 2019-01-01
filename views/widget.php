@@ -1,7 +1,7 @@
 <?php
 /**
  * MIT licence
- * Version 1.1.0
+ * Version 1.1.5
  * Sjaak Priester, Amsterdam 07-07-2014 ... 12-11-2015.
  *
  * Add illustrations to ActiveRecord in Yii 2.0 framework
@@ -12,7 +12,6 @@
 
 use yii\helpers\Html;
 use yii\db\ActiveRecord;
-use sjaakp\illustrated\Illustrated;
 use sjaakp\illustrated\Uploader;
 
 /**
