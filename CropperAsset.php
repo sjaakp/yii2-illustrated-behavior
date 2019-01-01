@@ -14,17 +14,25 @@ namespace sjaakp\illustrated;
 
 use yii\web\AssetBundle;
 
-class UploaderAsset extends AssetBundle {
+class CropperAsset extends AssetBundle {
     public $depends = [
         'yii\jui\JuiAsset',
     ];
 
-    public function init()    {
+    public $publishOptions = [
+        'only' => [ 'js/*', 'css/*' ]
+    ];
+
+//    public $sourcePath = '@bower/cropper';
+
+    public $baseUrl = '//unpkg.com/@sjaakp/cropper';
+    public $js = [ 'js/jquery.cropper.min.js' ];
+    public $css = [ 'css/jquery.cropper.min.css' ];
+
+/*    public function init()    {
         parent::init();
 
-        $this->sourcePath = __DIR__ . DIRECTORY_SEPARATOR . 'assets';
-        $this->js[] = YII_DEBUG ? 'js/jquery.stylefile.js' : 'js/jquery.stylefile.min.js';
         $this->js[] = YII_DEBUG ? 'js/jquery.cropper.js' : 'js/jquery.cropper.min.js';
-        $this->css[] = 'css/uploader.css';
-    }
+        $this->css[] = YII_DEBUG ? 'css/jquery.cropper.css' : 'css/jquery.cropper.min.css';
+    }*/
 }

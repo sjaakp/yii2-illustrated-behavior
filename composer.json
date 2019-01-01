@@ -8,14 +8,16 @@
         {
             "name": "Sjaak Priester",
             "email": "sjaak@sjaakpriester.nl",
-            "homepage": "http://sjaakpriester.nl"
+            "homepage": "https://sjaakpriester.nl"
         }
     ],
     "require": {
         "php": ">=5.5.0",
         "yiisoft/yii2": "~2.0.14",
         "yiisoft/yii2-jui": "*",
-        "yiisoft/yii2-imagine": "*"
+        "yiisoft/yii2-imagine": "*",
+        "bower-asset/sjaakp-cropper": "*",
+        "bower-asset/sjaakp-stylefile": "*"
     },
     "autoload": {
         "psr-4": {

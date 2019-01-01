@@ -112,8 +112,8 @@ class Uploader extends InputWidget {
 
         if (! is_numeric($ill->aspectRatio) && ! $model->{$ill->aspectRatio}) $model->{$ill->aspectRatio} = $this->defaultAspect;
 
-        $asset = new UploaderAsset();
-        $asset->register($view);
+        $view->registerAssetBundle(CropperAsset::class);
+        $view->registerAssetBundle(StylefileAsset::class);
 
         $cropVal = Html::getInputId($model, "__{$this->attribute}_crop__");
         $delSwitch = Html::getInputId($model, "__{$this->attribute}_delete__");
