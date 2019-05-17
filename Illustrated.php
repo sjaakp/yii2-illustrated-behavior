@@ -274,6 +274,6 @@ class Illustrated extends Behavior  {
     }
 
     protected function getBaseName()    {
-        return Inflector::camel2id(StringHelper::basename($this->owner->className()), '_');
+        return Inflector::camel2id(StringHelper::basename( get_class($this->owner)), '_');
     }
 }

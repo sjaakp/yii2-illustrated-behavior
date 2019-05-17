@@ -76,7 +76,7 @@ class Uploader extends InputWidget {
     /**
      * @var bool|array
      * Options for delete checkbox
-     * If false, no delete chekbox is rendered.
+     * If false, no delete checkbox is rendered.
      * @link http://www.yiiframework.com/doc-2.0/yii-helpers-basehtml.html#activeCheckbox()-detail
      */
     public $deleteOptions = [
