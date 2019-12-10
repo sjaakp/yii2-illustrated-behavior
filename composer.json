@@ -16,8 +16,6 @@
         "yiisoft/yii2": "~2.0.14",
         "yiisoft/yii2-jui": "*",
         "yiisoft/yii2-imagine": "*",
-        "bower-asset/sjaakp-cropper": "*",
-        "bower-asset/sjaakp-stylefile": "*"
     },
     "autoload": {
         "psr-4": {

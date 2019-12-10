@@ -5,6 +5,10 @@ Illustrated
 
 ### With associated upload-widget ###
 
+[![Latest Stable Version](https://poser.pugx.org/sjaakp/yii2-illustrated-behavior/v/stable)](https://packagist.org/packages/sjaakp/yii2-illustrated-behavior)
+[![Total Downloads](https://poser.pugx.org/sjaakp/yii2-illustrated-behavior/downloads)](https://packagist.org/packages/sjaakp/yii2-illustrated-behavior)
+[![License](https://poser.pugx.org/sjaakp/yii2-illustrated-behavior/license)](https://packagist.org/packages/sjaakp/yii2-illustrated-behavior)
+
 **Illustrated** is a Behavior for the [Yii2 framework](http://www.yiiframework.com/) that makes any [ActiveRecord](http://www.yiiframework.com/doc-2.0/yii-db-activerecord.html "Yii API"), well, *illustrated*. It links the ActiveRecord to one or more image files. The images have strict proportions, allowing for a clean layout of views and other pages. The uploaded images may have several resolutions.
 
 The **Illustrated** behavior co-operates with the enclosed **Uploader** widget. This lets the user crop the image, before uploading it to the server.

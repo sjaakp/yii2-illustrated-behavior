@@ -23,16 +23,7 @@ class CropperAsset extends AssetBundle {
         'only' => [ 'js/*', 'css/*' ]
     ];
 
-//    public $sourcePath = '@bower/cropper';
-
     public $baseUrl = '//unpkg.com/@sjaakp/cropper';
     public $js = [ 'js/jquery.cropper.min.js' ];
     public $css = [ 'css/jquery.cropper.min.css' ];
-
-/*    public function init()    {
-        parent::init();
-
-        $this->js[] = YII_DEBUG ? 'js/jquery.cropper.js' : 'js/jquery.cropper.min.js';
-        $this->css[] = YII_DEBUG ? 'css/jquery.cropper.css' : 'css/jquery.cropper.min.css';
-    }*/
 }

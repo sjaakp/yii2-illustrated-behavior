@@ -23,14 +23,6 @@ class StylefileAsset extends AssetBundle {
         'only' => [ '*.js' ]
     ];
 
-//    public $sourcePath = '@bower/stylefile';
-
     public $baseUrl = '//unpkg.com/@sjaakp/stylefile';
     public $js = [ 'jquery.stylefile.min.js' ];
-
-/*    public function init()    {
-        parent::init();
-
-        $this->js[] = YII_DEBUG ? 'jquery.stylefile.js' : 'jquery.stylefile.min.js';
-    }*/
 }
