@@ -15,7 +15,7 @@
         "php": ">=5.5.0",
         "yiisoft/yii2": "~2.0.14",
         "yiisoft/yii2-jui": "*",
-        "yiisoft/yii2-imagine": "*",
+        "yiisoft/yii2-imagine": "*"
     },
     "autoload": {
         "psr-4": {
