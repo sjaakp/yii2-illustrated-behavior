@@ -23,7 +23,7 @@ class CropperAsset extends AssetBundle {
         'only' => [ 'js/*', 'css/*' ]
     ];
 
-    public $baseUrl = '//unpkg.com/@sjaakp/cropper';
+    public $baseUrl = '//unpkg.com/@sjaakp/cropper@1.0.0';
     public $js = [ 'js/jquery.cropper.min.js' ];
     public $css = [ 'css/jquery.cropper.min.css' ];
 }
