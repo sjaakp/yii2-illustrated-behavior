@@ -2,17 +2,14 @@
 
 /**
  * MIT licence
- * Version 1.1.0
- * Sjaak Priester, Amsterdam 07-07-2014 ... 12-11-2015.
+ * Version 2.0.0
+ * Sjaak Priester, Amsterdam 07-07-2014 ... 23-06-2024.
  *
  * Add illustrations to ActiveRecord in Yii 2.0 framework
  *
  * @link https://github.com/sjaakp/yii2-illustrated-behavior
- * @link http://www.sjaakpriester.nl/software/illustrated
+ * @link http://sjaakpriester.nl/software/illustrated
  *
- * FAQ
- * I'm getting an error like 'Trying to get property of non-object'
- * - You probably didn't give the form the option 'enctype' => 'multipart/form-data'.
  */
 
 namespace sjaakp\illustrated;
@@ -22,35 +19,37 @@ use yii\base\Behavior;
 use yii\db\ActiveRecord;
 use yii\validators\FileValidator;
 use yii\validators\SafeValidator;
-use yii\helpers\Inflector;
-use yii\helpers\StringHelper;
+use yii\helpers\Json;
+use yii\helpers\FileHelper;
+use yii\helpers\Html;
+use yii\web\UploadedFile;
 
 class Illustrated extends Behavior  {
+    /** @var yii\db\ActiveRecordInterface $owner */
 
     /**
      * @var array list of illustration attributes
      * key is the name of the attribute that stores the file name of the resulting cropped image.
      * value is an array with the following members:
-     * - cropSize:  int - Size of the largest side of the cropped image, in pixels.
-     *              For portrait format (aspect ratio < 1.0) it is the height, for landscape format the width.
-     *              If noet set, the default is taken. Default: 240.
-     * - aspectRatio: float|string - If float: the fixed aspect ratio of the image; it is not saved in the database.
-     *              If string: name of aspect attribute in the model. The variable aspect ratio is saved in the database.
-     *              If not set, the default is taken Default: 1.0.
-     * - sizeSteps: int - Number of size variants of the cropped image. Each variant has half the size of the previous one.
-     *              Example: if cropSize = 1280, and sizeSteps = 5, variants will be saved with
-     *                  sizes 1280, 640, 320, 160, and 80 pixels, each in it's own subdirectory.
-     *              If sizeSteps = 0 or is not set, only one cropped image is saved, with size cropSize.
-     * - allowTooSmall: bool - If true, images which are too small to crop are accepted. They will be sized to fit
-     *              in the target size, defined bij cropSize and aspectRatio.
+     * - cropWidth:  int - Horizontal size of the cropped image, in pixels. If not set,
+     *              the cropped image is saved with the maximum possible width.
+     * - cropSteps: int - Number of size variants of the cropped image. Each variant has half the width of the previous one.
+     *              Example: if cropWidth = 1280, and cropSteps = 5, variants will be saved with
+     *                  widths 1280, 640, 320, 160, and 80 pixels, each in its own subdirectory.
+     *              If cropSteps = 0, only one cropped image is saved, with width cropWidth.
+     *              If cropSteps is not set, it is set to defaultSteps (4).
+     * - rejectTooSmall: bool - If false, images which are too small to crop are accepted.
+     *              If not set, it is assumed to be true.
      */
     public $attributes = [];
+
+    public $cropData = [];
 
     /**
      * @var null|string
      * Directory or alias where cropped images are saved.
      * If null (default), the directory will be '@webroot/<$illustrationDirectory>/<table name>', where table name is
-     *  the table name of the model.
+     *  the table name of the owner model.
      */
     public $directory;
 
@@ -81,61 +80,62 @@ class Illustrated extends Behavior  {
      */
     public $fileValidation = [];
 
-
-    /** Each attribute is associated with a few virtual attributes
-     * __<attr>_file__      UploadedFile
-     * __<attr>_image__     ImageInterface
-     * __<attr>_crop__      Json encoded crop values
-     * __<attr>_delete__    bool
-     * They are stored in $this->attributes under their base name ('file', 'image' etc.
+    /**
+     * @var int
+     * Maximum width or height of original, uncropped image, in pixels. If you encounter PHP memory problems,
+     * you may lower this number.
      */
+    public $treshold = 2000;
+
+    /**
+     * @var string
+     * MIME type of saved, cropped image(s). If null, cropped images will be saved with the same MIME type
+     * as the original.
+     */
+    public $mime = 'image/avif';    // PHP >= 8.1
+
+    /**
+     * @var int
+     * Value used if cropSteps  is not set.
+     */
+    public $defaultSteps = 4;
+
+    /**
+     * @var string
+     * Error message for images that are too small to crop. Parameters: original file name, width, and height.
+     * If $allowTooSmall is false, this setting is not used.
+     */
+    public $tooSmallError = 'Image "%s" is too small (%d×%d).';
+
+    /**
+     * @var string
+     * Error message for upload error.
+     * @see https://www.php.net/manual/en/features.file-upload.errors.php
+     */
+    public $uploadError = 'Upload Error %d.';
 
     // Magic functions to handle 'subattributes'.
-    // Attributes of the form '__<a>_<b>__' are delegated to $this->attributes[<a>]-><b>
-    public function __get($name)    {
-        $matches = null;
-        if (preg_match('/__(\\w+)_(\\w+)__/', $name, $matches))    {
-            $attr = $matches[1];
-            $vattr = $matches[2];
-            if (isset($this->attributes[$attr])) return $this->attributes[$attr]->{$vattr};
-        }
-        return parent::__get($name);
-    }
-
+    // Attributes of the form '<a>_<b>' are delegated to $this->attributes[<a>]-><b>
+    /**
+     * @inheritdoc
+     */
     public function __set($name, $value)    {
         $matches = null;
-        if (preg_match('/__(\\w+)_(\\w+)__/', $name, $matches))    {
+        if (preg_match('/(\\w+)_data/', $name, $matches))    {
             $attr = $matches[1];
-            $vattr = $matches[2];
-            if (isset($this->attributes[$attr])) $this->attributes[$attr]->$vattr = $value;
+            if (isset($this->attributes[$attr])) {
+                $this->cropData[$attr] = $value;
+            }
         }
         else parent::__set($name, $value);
     }
 
-    public function canGetProperty($name, $checkVars = true)    {
+    public function canSetProperty($name, $checkVars = true): bool
+    {
         $matches = null;
-        if (preg_match('/__(\\w+)_(\\w+)__/', $name, $matches))    {
+        if (preg_match('/(\\w+)_data/', $name, $matches))    {
             $attr = $matches[1];
-            $vattr = $matches[2];
-            if (isset($this->attributes[$attr]))    {
-                /** @var Illustration $cfg */
-                $cfg = $this->attributes[$attr];
-                return $checkVars ? $cfg->hasProperty($vattr) : true;
-            }
-        }
-        return parent::canGetProperty($name, $checkVars);
-    }
-
-    public function canSetProperty($name, $checkVars = true)    {
-        $matches = null;
-        if (preg_match('/__(\\w+)_(\\w+)__/', $name, $matches))    {
-            $attr = $matches[1];
-            $vattr = $matches[2];
-            if (isset($this->attributes[$attr]))    {
-                /** @var Illustration $cfg */
-                $cfg = $this->attributes[$attr];
-                return $checkVars ? $cfg->hasProperty($vattr) : true;
-            }
+            return isset($this->attributes[$attr]);
         }
         return parent::canSetProperty($name, $checkVars);
     }
@@ -145,7 +145,6 @@ class Illustrated extends Behavior  {
      */
     public function events()    {
         return [
-            ActiveRecord::EVENT_BEFORE_VALIDATE => 'beforeValidate',
             ActiveRecord::EVENT_BEFORE_INSERT => 'beforeSave',
             ActiveRecord::EVENT_BEFORE_UPDATE => 'beforeSave',
             ActiveRecord::EVENT_BEFORE_DELETE => 'beforeDelete',
@@ -159,121 +158,273 @@ class Illustrated extends Behavior  {
     public function attach($owner)    {
         parent::attach($owner);
 
-        $attrs = [];
-        $fileAttrs = [];
-        $safeAttrs = [];
-        foreach ($this->attributes as $attr => $illustration)    {
-            if (is_numeric($attr) && is_string($illustration))  {
-                $attr = $illustration;
-                $illustration = [];
-            }
-            if (is_array($illustration)) $illustration = Yii::createObject(array_merge([
-                'class' => Illustration::class,
-                'owner' => $this,
-                'attribute' => $attr
-            ], $illustration));
-
-            $fileAttrs[] = "__{$attr}_file__";
-            $safeAttrs = array_merge($safeAttrs, $illustration->safeAttributes);
-
-            $attrs[$attr] = $illustration;
-        }
-        $this->attributes = $attrs;
-
+        $keys = array_keys($this->attributes);
         // add validation rules to model
         $vals = $owner->getValidators();
         $vals[] = new FileValidator(array_merge($this->fileValidation, [
-            'attributes' => $fileAttrs,
-            'extensions' => 'jpg, jpeg, gif, png',
+            'attributes' => $keys,
+            'extensions' => 'jpg, jpeg, bmp, gif, png, webp, avif',
             'skipOnEmpty' => true,
             'on' => $owner->scenario
         ]));
+        $dataAttrs = array_map(fn($v): string => "{$v}_data", $keys);
         $vals[] = new SafeValidator([
-            'attributes' => $safeAttrs,
+            'attributes' => $dataAttrs,
             'on' => $owner->scenario
         ]);
     }
 
     /**
+     * @inheritdoc
      * @param $event
-     */
-    public function beforeValidate($event)  {
-        foreach ($this->attributes as $attr => $cfg)    {
-            /** @var Illustration $cfg */
-            $cfg->beforeValidate($event);
-        }
-    }
-
-    /**
-     * @param $event
+     * @throws \yii\base\Exception
      */
     public function beforeSave($event)  {
+        /** @var yii\base\Model $owner */
+        $owner = $this->owner;
         foreach ($this->attributes as $attr => $cfg)    {
-            /** @var Illustration $cfg */
-            $cfg->beforeSave($event);
+            $current = $owner->getOldAttribute($attr);
+
+            $upload = UploadedFile::getInstance($owner, $attr); // no file, or deleted
+            if (! $upload) {
+                $this->deleteFiles($attr);
+                continue;
+            }
+
+            $crop = Json::decode($this->cropData[$attr]);
+
+            if ($upload->getHasError()) {  // something wrong
+                $owner->addError($attr,
+                    sprintf($this->uploadError, $upload->error));
+                $event->isValid = false;
+                return false;
+
+            } else if ($upload->name == $current) { // unchanged
+                $owner->setAttribute($attr, $current);  // reset attribute (it will be empty)
+
+            } else {   // valid new upload
+                $image = match ($upload->type) {
+                    'image/bmp' => imagecreatefrombmp($upload->tempName),
+                    'image/gif' => imagecreatefromgif($upload->tempName),
+                    'image/jpeg' => imagecreatefromjpeg($upload->tempName),
+                    'image/png' => imagecreatefrompng($upload->tempName),
+                    'image/webp' => imagecreatefromwebp($upload->tempName),
+                    'image/avif' => imagecreatefromavif($upload->tempName),   // PHP >= 8.1
+                };
+
+                $scale = 1.0;
+
+                $sx = imagesx($image);
+                $sy = imagesy($image);
+                $greatest = max($sx, $sy);
+                if ($greatest >= $this->treshold) {
+                    $scale = $this->treshold / $greatest;
+                    $nsx = (int)round($scale * $sx);
+                    $nsy = (int)round($scale * $sy);
+                    $newImage = imagecreatetruecolor($nsx, $nsy);
+                    imagecopyresampled($newImage, $image, 0, 0, 0, 0, $nsx, $nsy, $sx, $sy);
+                    $image = $newImage;
+                }
+
+                $image = imagerotate($image, $crop['degrees'] ?? 0, 0);
+                $image = imagecrop($image, [ 'x' => (int)round($scale * $crop['x']), 'y' => (int)round($scale * $crop['y']),
+                    'width' => (int)round($scale * $crop['w']), 'height' => (int)round($scale * $crop['h']) ]);
+
+                $dir = $this->getImgRootDir($attr);
+                FileHelper::createDirectory($dir);  // ensure it exists
+
+                $fileName = $this->randomName($attr, $upload);
+
+                if (isset($cfg['cropWidth']))    {
+                    $ww = $cfg['cropWidth'];
+                    $hh = (int) round($ww / $crop['aspect']);
+
+                    if ($cfg['rejectTooSmall'] ?? true) {
+                        if (imagesx($image) < $ww || imagesy($image) < $hh) {
+                            $owner->addError($attr,
+                                sprintf($this->tooSmallError, $upload->name, $sx, $sy));
+                            $event->isValid = false;
+                            return false;
+                        }
+                    }
+
+                    $steps = $cfg['cropSteps'] ?? $this->defaultSteps;
+                    while ($steps > 0)  {
+                        $subDir = $dir . DIRECTORY_SEPARATOR . $ww . 'w';
+                        FileHelper::createDirectory($subDir);  // ensure it exists
+                        $image = imageScale($image, $ww);
+                        $this->saveImage($image, $subDir . DIRECTORY_SEPARATOR . $fileName, $upload);
+                        $ww >>= 1;
+                        $steps--;
+                    }
+                }
+                else {
+                    $this->saveImage($image, $dir . DIRECTORY_SEPARATOR . $fileName, $upload);
+                }
+
+                $this->deleteFiles($attr);  // delete old files, if any
+                $owner->setAttribute($attr, $fileName);
+            }
         }
+        return true;
     }
 
     /**
+     * @inheritdoc
      * @param $event
      */
     public function beforeDelete($event)  {
         foreach ($this->attributes as $attr => $cfg) {
-            /** @var Illustration $cfg */
-            $cfg->deleteFiles();
+            $this->deleteFiles($attr);
         }
+        return true;
     }
 
     /**
-     *
-     * @param $attribute string
-     * @param int $size
-     *      The largest side in pixels.
-     *      If $sizeSteps > 0, getImgHtml returns the smallest crop variant equal to or bigger than $size.
-     *      If $size == 0 (default) the biggest variant is returned.
-     * @param bool $forceSize
-     *      If true (default), the element CSS is set to $size.
-     * @param array $options
-     *      HTML-options of the img-tag; @link http://www.yiiframework.com/doc-2.0/yii-helpers-basehtml.html#img()-detail .
-     * @return string Override this function to specialize it.
-     * Override this function to specialize it.
+     * @param $attribute
+     * @return void
+     * Delete file(s) belonging to attribute.
      */
-    public function getImgHtml($attribute, $size = 0, $forceSize = true, $options = [])  {
-        return $this->getImgHtmlInternal($attribute, $size, $forceSize, $options);
-    }
+    public function deleteFiles($attribute) {
+        /** @var yii\db\ActiveRecordInterface $owner */
+        $owner = $this->owner;
+        $fileName = $owner->getOldAttribute($attribute);
 
-    public function getImgHtmlInternal($attribute, $size, $forceSize, $options)  {
-        /** @var Illustration $cfg */
+        if (empty($fileName)) return;   // no files
+
         $cfg = $this->attributes[$attribute];
-        return $cfg->getImgHtml($size, $forceSize, $options);
+        $dir = $this->getImgRootDir($attribute);
+
+        if (isset($cfg['cropWidth']))    {
+            $steps = $cfg['cropSteps'] ?? $this->defaultSteps;
+            $ww = $cfg['cropWidth'];
+            while ($steps > 0)  {
+                $subDir = $dir . DIRECTORY_SEPARATOR . $ww . 'w';
+                $p = $subDir . DIRECTORY_SEPARATOR . $fileName;
+                if (file_exists($p)) unlink($p);
+                $ww >>= 1;
+                $steps--;
+            }
+        } else {
+            $path = $dir . DIRECTORY_SEPARATOR . $fileName;
+            if (file_exists($path)) unlink($path);
+        }
+
+        $owner->setAttribute($attribute, '');
     }
 
     /**
-     *
-     * @param $attribute string
-     * @param int $size
-     *      The largest side in pixels.
-     *      If $sizeSteps > 0, getImgHtml returns the smallest crop variant equal to or bigger than $size.
-     *      If $size == 0 (default) the biggest variant is returned.
-     * @return string The url of the image source, or false if not set.
+     * @param $attribute
+     * @param $options
+     * @return string - HTML <img> with src and srcset, or $this->>noImage if not present.
      */
-    public function getImgSrc($attribute, $size = 0)  {
-        /** @var Illustration $cfg */
+    public function getImgHtml($attribute, $options = [])    {
+        $owner = $this->owner;
+        $fileName = $owner->getAttribute($attribute);
+        if (empty($fileName)) return $this->noImage;
+
         $cfg = $this->attributes[$attribute];
-        return $cfg->getImgSrc($size);
+
+        if (isset($cfg['cropWidth'])) {
+            $options['srcset'] = $this->getSrcSet($attribute);
+
+            // if 'sizes' is absent, img is rendered way too wide (width of viewport)
+            if (! isset($options['sizes'])) $options['sizes'] = $cfg['cropWidth'] . 'px';
+        }
+
+        return Html::img($this->getSrc($attribute), $options);
     }
 
-    protected function getImgRootDir()  {
-        $r = $this->directory ?: '@webroot/' . $this->illustrationDirectory . '/' . $this->baseName;
-        return Yii::getAlias($r);
+    /**
+     * @param $attribute
+     * @return string - srcset; '' if CropWidth is not set
+     */
+    public function getSrcSet($attribute)   {
+        $cfg = $this->attributes[$attribute];
+
+        if (!isset($cfg['cropWidth'])) return '';
+
+        $steps = $cfg['cropSteps'] ?? $this->defaultSteps;
+        $ww = $cfg['cropWidth'];
+        $i = 0;
+        $srcset = [];
+        while ($steps > 0)  {
+            $srcset[] = $this->getSrc($attribute, $i) . " {$ww}w";
+            $ww >>= 1;
+            $steps--;
+            $i++;
+        }
+        return implode(',', $srcset);
     }
 
-    protected function getImgRootUrl()  {
-        $r = $this->baseUrl ?: '@web/' . $this->illustrationDirectory . '/' . $this->baseName;
-        return Yii::getAlias($r);
+    /**
+     * @param $attribute
+     * @param $step - size variant, 0 is greatest nsteps - 1 for smallest. Can be negative;
+     *          -1 gives the smallest variant.
+     * @return string|null URL of cropped image
+     */
+    public function getSrc($attribute, $step = 0)   {
+        $owner = $this->owner;
+        $fileName = $owner->getAttribute($attribute);
+        if (empty($fileName)) return null;
+
+        $cfg = $this->attributes[$attribute];
+
+        $baseUrl = $this->getImgRootUrl($attribute);
+        if (isset($cfg['cropWidth']))   {
+            $steps = $cfg['cropSteps'] ?? $this->defaultSteps;
+            if ($step < 0) $step += $steps;
+            $step %= $steps;    // no insensible values
+            $w = $cfg['cropWidth'] >> $step;
+            $baseUrl .= "/{$w}w";
+        }
+        return "$baseUrl/$fileName";
     }
 
-    protected function getBaseName()    {
-        return Inflector::camel2id(StringHelper::basename( get_class($this->owner)), '_');
+    protected function getImgRootDir($attribute)  {
+        return Yii::getAlias($this->directory ?: $this->getResourceAlias('@webroot', $attribute));
+    }
+
+    protected function getImgRootUrl($attribute)  {
+        return Yii::getAlias($this->baseUrl ?: $this->getResourceAlias('@web', $attribute));
+    }
+
+    protected function getResourceAlias($root, $attribute)   {
+        $illDir = $this->illustrationDirectory;
+        $baseName =  get_class($this->owner)::tableName();
+        return "$root/$illDir/$baseName/$attribute";
+    }
+
+    protected function saveImage($image, $path, $uploadedFile) {
+        $mime = $this->mime ?? $uploadedFile->type;
+        match ($mime) {
+            'image/bmp' => imagebmp($image, $path),
+            'image/gif' => imagegif($image, $path),
+            'image/jpeg' => imagejpeg($image, $path),
+            'image/png' => imagepng($image, $path),
+            'image/webp' => imagewebp($image, $path),
+            'image/avif' => imageavif($image, $path),   // PHP >= 8.1
+        };
+    }
+
+    /**
+     * @return string
+     * Create random file name. Override this if you need another name generation.
+     * This function returns a random combination of six number characters and lower case letters,
+     * allowing for 2 billion file names. Includes extension.
+     */
+    protected function randomName($attr, $uploadedFile) {
+        /** @var yii\db\ActiveRecordInterface $owner */
+        $owner = $this->owner;
+
+        $mime = $this->mime ?? $uploadedFile->type;
+        $ext = substr($mime, 6);
+        if ($ext == 'jpeg') $ext = 'jpg';
+
+        do {
+            $r = base_convert(mt_rand(60466176 , mt_getrandmax()), 10, 36);  // 60466176 = 36^5; ensure six characters
+            $r .= ".$ext";
+        } while ($owner->findOne(['like', $attr, $r . '%', false]));  // ensure unique
+        return $r;
     }
 }
