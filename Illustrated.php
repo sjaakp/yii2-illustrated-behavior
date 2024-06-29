@@ -2,7 +2,7 @@
 
 /**
  * MIT licence
- * Version 2.0.0
+ * Version 2.0.1
  * Sjaak Priester, Amsterdam 07-07-2014 ... 23-06-2024.
  *
  * Add illustrations to ActiveRecord in Yii 2.0 framework
@@ -235,7 +235,9 @@ class Illustrated extends Behavior  {
 
                 $fileName = $this->randomName($attr, $upload);
 
-                if (isset($cfg['cropWidth']))    {
+                $steps = $cfg['cropSteps'] ?? $this->defaultSteps;
+
+                if (isset($cfg['cropWidth']) && $steps > 0)    {
                     $ww = $cfg['cropWidth'];
                     $hh = (int) round($ww / $crop['aspect']);
 
@@ -248,7 +250,6 @@ class Illustrated extends Behavior  {
                         }
                     }
 
-                    $steps = $cfg['cropSteps'] ?? $this->defaultSteps;
                     while ($steps > 0)  {
                         $subDir = $dir . DIRECTORY_SEPARATOR . $ww . 'w';
                         FileHelper::createDirectory($subDir);  // ensure it exists
@@ -259,6 +260,7 @@ class Illustrated extends Behavior  {
                     }
                 }
                 else {
+                    if (isset($cfg['cropWidth'])) $image = imageScale($image, $cfg['cropWidth']);
                     $this->saveImage($image, $dir . DIRECTORY_SEPARATOR . $fileName, $upload);
                 }
 
@@ -295,8 +297,9 @@ class Illustrated extends Behavior  {
         $cfg = $this->attributes[$attribute];
         $dir = $this->getImgRootDir($attribute);
 
-        if (isset($cfg['cropWidth']))    {
-            $steps = $cfg['cropSteps'] ?? $this->defaultSteps;
+        $steps = $cfg['cropSteps'] ?? $this->defaultSteps;
+
+        if (isset($cfg['cropWidth']) && $steps > 0)    {
             $ww = $cfg['cropWidth'];
             while ($steps > 0)  {
                 $subDir = $dir . DIRECTORY_SEPARATOR . $ww . 'w';
@@ -325,7 +328,9 @@ class Illustrated extends Behavior  {
 
         $cfg = $this->attributes[$attribute];
 
-        if (isset($cfg['cropWidth'])) {
+        $steps = $cfg['cropSteps'] ?? $this->defaultSteps;
+
+        if (isset($cfg['cropWidth']) && $steps > 0) {
             $options['srcset'] = $this->getSrcSet($attribute);
 
             // if 'sizes' is absent, img is rendered way too wide (width of viewport)
@@ -342,9 +347,9 @@ class Illustrated extends Behavior  {
     public function getSrcSet($attribute)   {
         $cfg = $this->attributes[$attribute];
 
-        if (!isset($cfg['cropWidth'])) return '';
-
         $steps = $cfg['cropSteps'] ?? $this->defaultSteps;
+        if (!isset($cfg['cropWidth']) || ! $steps) return '';
+
         $ww = $cfg['cropWidth'];
         $i = 0;
         $srcset = [];
@@ -371,8 +376,9 @@ class Illustrated extends Behavior  {
         $cfg = $this->attributes[$attribute];
 
         $baseUrl = $this->getImgRootUrl($attribute);
-        if (isset($cfg['cropWidth']))   {
-            $steps = $cfg['cropSteps'] ?? $this->defaultSteps;
+        $steps = $cfg['cropSteps'] ?? $this->defaultSteps;
+
+        if (isset($cfg['cropWidth']) && $steps > 0)   {
             if ($step < 0) $step += $steps;
             $step %= $steps;    // no insensible values
             $w = $cfg['cropWidth'] >> $step;
